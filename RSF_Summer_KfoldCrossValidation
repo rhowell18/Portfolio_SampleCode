@@ -1,0 +1,412 @@
+#Generate heat map of RSF and run k-fold cross validation for summer points
+
+arc.check_product()
+summeruse = arc.open(path = "H:\\School\\GIS\\Thesis_RSF\\KfoldValidation\\Kfold_data.gdb\\summer_kfold")
+summeruse.df = arc.select(summeruse)
+#summeruse.df = read.csv("kfolds2_test.csv")
+
+###Rasters#######
+#set rasters
+leks_tif = raster("H:\\School\\GIS\\Thesis_RSF\\R_RasterCalc\\TIF3\\decay_leks15.tif")
+ndvi_tif = raster("H:\\School\\GIS\\Thesis_RSF\\R_RasterCalc\\TIF3\\Extract_ndvi_50.tif")
+paved_tif = raster("H:\\School\\GIS\\Thesis_RSF\\R_RasterCalc\\TIF3\\decay_paved15.tif")
+tpi_100_tif = raster("H:\\School\\GIS\\Thesis_RSF\\R_RasterCalc\\TIF3\\Extract_tpi_100.tif")
+tpi_25_tif = raster("H:\\School\\GIS\\Thesis_RSF\\R_RasterCalc\\TIF3\\Extract_tpi_25.tif")
+vrm_11_tif = raster("H:\\School\\GIS\\Thesis_RSF\\R_RasterCalc\\TIF3\\Extract_vrm_11.tif")
+majdrt_tif = raster("H:\\School\\GIS\\Thesis_RSF\\R_RasterCalc\\TIF3\\decay_majdrt15.tif")
+mindrt_tif = raster("H:\\School\\GIS\\Thesis_RSF\\R_RasterCalc\\TIF3\\decay_mindrt15.tif")
+slope_tif = raster("H:\\School\\GIS\\Thesis_RSF\\R_RasterCalc\\TIF3\\Extract_slope.tif")
+elev_tif = raster("H:\\School\\GIS\\Thesis_RSF\\R_RasterCalc\\TIF3\\elevation.tif")
+rip_tif = raster("H:\\School\\GIS\\Thesis_RSF\\R_RasterCalc\\TIF3\\decay_rip.tif")
+aspect2 = raster("H:\\School\\GIS\\Thesis_RSF\\R_RasterCalc\\TIF3\\reclass_aspect_2.tif")
+aspect3 = raster("H:\\School\\GIS\\Thesis_RSF\\R_RasterCalc\\TIF3\\reclass_aspect_3.tif")
+aspect4 = raster("H:\\School\\GIS\\Thesis_RSF\\R_RasterCalc\\TIF3\\reclass_aspect_4.tif")
+aspect = raster("H:\\School\\GIS\\Thesis_RSF\\R_RasterCalc\\TIF3\\reclass_asp_1.tif")
+
+
+####scale
+leks_tif_s = scale(leks_tif)
+ndvi_tif_s = scale(ndvi_tif)
+paved_tif_s = scale(paved_tif)
+tpi_100_tif_s = scale(tpi_100_tif)
+tpi_25_tif_s = scale(tpi_25_tif)
+vrm_11_tif_s = scale(vrm_11_tif)
+majdrt_tif_s = scale(majdrt_tif)
+mindrt_tif_s = scale(mindrt_tif)
+slope_tif_s = scale(slope_tif)
+elev_tif_s = scale(elev_tif)
+rip_tif_s = scale(rip_tif)
+###############################
+
+#convert raster to dataframe
+# leks_df = as.data.frame(leks_tif_s, xy = T, na.rm = T)
+# ndvi_df = as.data.frame(ndvi_tif_s, xy = T, na.rm = T)
+# paved_df = as.data.frame(paved_tif_s, xy = T, na.rm = T)
+# tpi100_df = as.data.frame(tpi_100_tif_s, xy = T, na.rm = T)
+# tpi25_df = as.data.frame(tpi_25_tif_s, xy = T, na.rm = T)
+# vrm11_df = as.data.frame(vrm_11_tif_s, xy = T, na.rm = T)
+# majdrt_df = as.data.frame(majdrt_tif_s, xy = T, na.rm = T)
+# mindrt_df = as.data.frame(mindrt_tif_s, xy = T, na.rm = T)
+# slope_df = as.data.frame(slope_tif_s, xy = T, na.rm = T)
+# elev_df = as.data.frame(elev_tif_s, xy = T, na.rm = T)
+# rip_df = as.data.frame(rip_tif_s, xy = T, na.rm = T)
+# aspect2_df = as.data.frame(aspect2, xy=T, na.rm = T)
+# aspect3_df = as.data.frame(aspect3, xy=T, na.rm = T)
+# aspect4_df = as.data.frame(aspect4, xy=T, na.rm = T)
+# aspect_df = as.data.frame(aspect, xy=T, na.rm = T)
+# 
+# rasters = rbind(c(leks_df, ndvi_df))
+# rasters_df = as.data.frame(rasters)
+# rasters_df <- merge(leks_df,ndvi_df, by=c("x","y"))
+# rasters_df2 <- merge(rasters_df, tpi100_df,by=c("x","y"))
+# rasters_df3 <- merge(rasters_df2, tpi25_df,by=c("x","y"))
+# rasters_df4 <- merge(rasters_df3, vrm11_df,by=c("x","y"))
+# rasters_df5 <- merge(rasters_df4, majdrt_df,by=c("x","y"))
+# rasters_df6 <- merge(rasters_df5, mindrt_df,by=c("x","y"))
+# rasters_df7 <- merge(rasters_df6, slope_df,by=c("x","y"))
+# rasters_df8 <- merge(rasters_df7, elev_df,by=c("x","y"))
+# rasters_df9 <- merge(rasters_df8, aspect2_df,by=c("x","y"))
+# rasters_df10 <- merge(rasters_df9, aspect3_df,by=c("x","y"))
+# rasters_df11 <- merge(rasters_df10, aspect4_df,by=c("x","y"))
+# rasters_df_all <- merge(rasters_df11, rip_df,by=c("x","y"))
+# rasters_df_all_2 <- merge(rasters_df_all, aspect_df,by=c("x","y"))
+
+##################################
+#scale use point variables
+summeruse.df$dist_paved_s = scale(summeruse.df$dist_paved)
+summeruse.df$dist_mindrt_s = scale(summeruse.df$dist_mindrt)
+summeruse.df$dist_leks_s = scale(summeruse.df$dist_leks)
+summeruse.df$dist_lake_s = scale(summeruse.df$dist_lake)
+summeruse.df$ndvi_50_s = scale(summeruse.df$ndvi_50)
+summeruse.df$ndvi_25_s = scale(summeruse.df$ndvi_25)
+summeruse.df$ndvi_10_s = scale(summeruse.df$ndvi_10)
+summeruse.df$slope_s = scale(summeruse.df$slope)
+summeruse.df$elevation_s = scale(summeruse.df$elevation)
+summeruse.df$dist_dist_lines_s = scale(summeruse.df$dist_dist_lines)
+summeruse.df$dist_trans_lines_s = scale(summeruse.df$dist_trans_lines)
+summeruse.df$dist_powerline_s = scale(summeruse.df$dist_powerline)
+summeruse.df$dist_ag_s = scale(summeruse.df$dist_ag)
+summeruse.df$tpi_100_s = scale(summeruse.df$tpi_100)
+summeruse.df$tpi_50_s = scale(summeruse.df$tpi_50)
+summeruse.df$tpi_25_s = scale(summeruse.df$tpi_25)
+summeruse.df$tpi_10_s = scale(summeruse.df$tpi_10)
+summeruse.df$vrm_11_s = scale(summeruse.df$vrm_11)
+summeruse.df$vrm_7_s = scale(summeruse.df$vrm_7)
+summeruse.df$vrm_5_s = scale(summeruse.df$vrm_5)
+summeruse.df$dist_tree_s = scale(summeruse.df$dist_tree)
+summeruse.df$dist_sage_s = scale(summeruse.df$dist_sage)
+summeruse.df$dist_grass_s = scale(summeruse.df$dist_grass)
+summeruse.df$dist_rip_s = scale(summeruse.df$dist_rip)
+summeruse.df$dist_struct_s = scale(summeruse.df$dist_struct)
+summeruse.df$dist_majdrt_s = scale(summeruse.df$dist_majdrt)
+summeruse.df$decay_pline_s = scale(summeruse.df$decay_pline_05)
+summeruse.df$decay_dline_s = scale(summeruse.df$decay_dline05)
+summeruse.df$decay_tline_s = scale(summeruse.df$decay_tline05)
+summeruse.df$decay_majdrt_s = scale(summeruse.df$decay_majdrt)
+summeruse.df$decay_mindrt_s = scale(summeruse.df$decay_mindrt)
+summeruse.df$decay_paved_s = scale(summeruse.df$decay_paved)
+summeruse.df$decay_struct_s = scale(summeruse.df$decay_struct)
+summeruse.df$decay_ag_s = scale(summeruse.df$decay_ag)
+summeruse.df$decay_leks_s = scale(summeruse.df$decay_leks)
+summeruse.df$decay_lake_s = scale(summeruse.df$decay_lake)
+summeruse.df$decay_tree_s = scale(summeruse.df$decay_tree)
+summeruse.df$decay_sage_s = scale(summeruse.df$decay_sage)
+summeruse.df$decay_grass_s = scale(summeruse.df$decay_grass)
+summeruse.df$decay_rip_s = scale(summeruse.df$decay_rip)
+summeruse.df$decay_pline15_s = scale(summeruse.df$decay_pline_15)
+summeruse.df$decay_dline15_s = scale(summeruse.df$decay_dline15)
+summeruse.df$decay_tline15_s = scale(summeruse.df$decay_tline15)
+summeruse.df$decay_majdrt15_s = scale(summeruse.df$decay_majdrt15)
+summeruse.df$decay_mindrt15_s = scale(summeruse.df$decay_mindrt15)
+summeruse.df$decay_paved15_s = scale(summeruse.df$decay_paved15)
+summeruse.df$decay_struct15_s = scale(summeruse.df$decay_struct15)
+summeruse.df$decay_ag15_s = scale(summeruse.df$decay_ag15)
+summeruse.df$decay_leks15_s = scale(summeruse.df$decay_leks15)
+summeruse.df$decay_lake15_s = scale(summeruse.df$decay_lake15)
+summeruse.df$decay_tree15_s = scale(summeruse.df$decay_tree15)
+summeruse.df$decay_sage15_s = scale(summeruse.df$decay_sage15)
+summeruse.df$decay_grass15_s = scale(summeruse.df$decay_grass15)
+summeruse.df$decay_rip15_s = scale(summeruse.df$decay_rip15)
+
+summeruse.df$UniqueID = as.factor(summeruse.df$UniqueID)
+summeruse.df$Use = as.factor(summeruse.df$Use)
+summeruse.df$aspect = as.factor((summeruse.df$aspect))
+summeruse.df$class = as.factor(summeruse.df$class)
+summeruse.df$SEX1 = as.numeric(summeruse.df$SEX)
+summeruse.df$GPS1 = as.numeric(summeruse.df$GPS)
+summeruse.df$aspect2 = as.numeric((summeruse.df$aspect2))
+summeruse.df$aspect3 = as.numeric((summeruse.df$aspect3))
+summeruse.df$aspect4 = as.numeric((summeruse.df$aspect4))
+
+kfolds1=subset(summeruse.df, K_iter!=1 | Use == '0')
+kfolds2=subset(summeruse.df, K_iter!=2 | Use == '0')
+kfolds3=subset(summeruse.df, K_iter!=3 | Use == '0')
+kfolds5=subset(summeruse.df, K_iter!=5 | Use == '0')
+kfolds4=subset(summeruse.df, K_iter!=4 | Use == '0')
+
+#Kfold 1#####################################################################################################################
+fold1=subset(summeruse.df, K_iter==1 | Use == '0')
+fold1$UniqueID = as.factor(fold1$UniqueID)
+fold1$Use = as.factor(fold1$Use)
+fold1$aspect = as.factor((fold1$aspect))
+fold1$class = as.factor(fold1$class)
+fold1$SEX = as.factor(fold1$SEX)
+fold1$GPS = as.factor(fold1$GPS)
+predictfold1_21= glmer(Use ~ decay_leks15_s + (decay_leks15_s*GPS) + ndvi_50_s + (ndvi_50_s*GPS) + decay_paved15_s + (decay_paved15_s*GPS) + GPS + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = kfolds1, weights = weight )
+summary(predictfold1_21)
+
+#fold1$predictF = predict(predictfold1_7, fold1)
+fold1$predictF1 = (exp(predict(predictfold1_21, fold1, allow.new.levels = T)))/ (1 + exp(predict(predictfold1_21, fold1, allow.new.levels = T)))
+
+#calc raster ranges
+summerGPS = 0.6708
+summerSEX = 0.2696
+summer1_map = exp(-14.8715 + (leks_tif_s *1.3654) + (summerGPS * 4.7690) + (ndvi_tif_s * -0.1176) + (paved_tif_s * 0.3302) + (summerSEX * -1.4531) + (summerGPS * leks_tif_s * 2.2044) + (summerGPS * ndvi_tif_s * -0.9278) + (summerGPS * paved_tif_s * 1.2042))/
+  ( 1 + exp(-14.8715 + (leks_tif_s *1.3654) + (summerGPS * 4.7690) + (ndvi_tif_s * -0.1176) + (paved_tif_s * 0.3302) + (summerSEX * -1.4531) + (summerGPS * leks_tif_s * 2.2044) + (summerGPS * ndvi_tif_s * -0.9278) + (summerGPS * paved_tif_s * 1.2042)))
+points = rasterToPoints(summer1_map)
+points_df = as.data.frame(points)
+points2 = points_df$layer
+Bin = bin_data(points2, bins = 5, binType = 'quantile' )#mltools package
+summary(Bin)
+
+# rasters_df_all_2$decay_leks15_s = rasters_df_all_2$decay_leks15
+# rasters_df_all_2$tpi_100_s = rasters_df_all_2$Extract_tpi_100
+# rasters_df_all_2$tpi_25_s = rasters_df_all_2$Extract_tpi_25
+# rasters_df_all_2$vrm_11_s = rasters_df_all_2$Extract_vrm_11
+# rasters_df_all_2$slope_s = rasters_df_all_2$Extract_slope
+# rasters_df_all_2$aspect2 = rasters_df_all_2$reclass_aspect_2
+# rasters_df_all_2$aspect3 = rasters_df_all_2$reclass_aspect_3
+# rasters_df_all_2$aspect4 = rasters_df_all_2$reclass_aspect_4
+# rasters_df_all_2$elevation_s = rasters_df_all_2$elevation
+# rasters_df_all_2$decay_majdrt15_s = rasters_df_all_2$decay_majdrt15
+# rasters_df_all_2$decay_rip_s = rasters_df_all_2$decay_rip
+# rasters_df_all_2$aspect = rasters_df_all_2$reclass_asp_1
+# 
+# rasters_df_all_2$Wf1predict = predict(predictfold1_7, rasters_df_all_2)
+
+###compare points with heatmap
+test1 = subset(fold1, K_iter==1)
+summer_k1_a = nrow(subset(test1, predictF1 <= 4.58862407836792e-07))#/nrow(test1)
+summer_k1_b = nrow(subset(test1, predictF1 > 4.58862407836792e-07 & predictF1 < 1.26999065440973e-06))#/nrow(test1)
+summer_k1_c = nrow(subset(test1, predictF1 > 1.26999065440973e-06 & predictF1 < 5.72250689796932e-06))#/nrow(test1)
+summer_k1_d = nrow(subset(test1, predictF1 > 5.72250689796932e-06 & predictF1 < 4.14940008275245e-05))#/nrow(test1)
+summer_k1_e = nrow(subset(test1, predictF1 > 4.14940008275245e-05 & predictF1 < 1))#/nrow(test1) 1293/1293
+
+#Kfold 2#####################################################################################################################
+fold2=subset(summeruse.df, K_iter==2 | Use == '0')
+fold2$UniqueID = as.factor(fold2$UniqueID)
+fold2$Use = as.factor(fold2$Use)
+fold2$aspect = as.factor((fold2$aspect))
+fold2$class = as.factor(fold2$class)
+fold2$SEX = as.factor(fold2$SEX)
+fold2$GPS = as.factor(fold2$GPS)
+predictfold2_21= glmer(Use ~ decay_leks15_s + (decay_leks15_s*GPS) + ndvi_50_s + (ndvi_50_s*GPS) + decay_paved15_s + (decay_paved15_s*GPS) + GPS + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = kfolds2, weights = weight )
+summary(predictfold2_21)
+
+#fold2$predictF = predict(predictfold2_7, fold2)
+fold2$predictF2 = (exp(predict(predictfold2_21, fold2, allow.new.levels = T)))/ (1 + exp(predict(predictfold2_21, fold2, allow.new.levels = T)))
+
+#calc raster ranges
+summerGPS = 0.6708
+summerSEX = 0.2696
+summer2_map = exp(-14.8774 + (leks_tif_s *1.3469) + (summerGPS * 4.7845) + (ndvi_tif_s * -0.1284) + (paved_tif_s * 0.3020) + (summerSEX * -1.4801) + (summerGPS * leks_tif_s * 2.2496) + (summerGPS * ndvi_tif_s * -0.8558) + (summerGPS * paved_tif_s * 1.2377))/
+  ( 1 + exp(-14.8774 + (leks_tif_s *1.3469) + (summerGPS * 4.7845) + (ndvi_tif_s * -0.1284) + (paved_tif_s * 0.3020) + (summerSEX * -1.4801) + (summerGPS * leks_tif_s * 2.2496) + (summerGPS * ndvi_tif_s * -0.8558) + (summerGPS * paved_tif_s * 1.2377)))
+points = rasterToPoints(summer2_map)
+points_df = as.data.frame(points)
+points2 = points_df$layer
+Bin = bin_data(points2, bins = 5, binType = 'quantile' )#mltools package
+summary(Bin)
+
+# rasters_df_all_2$decay_leks15_s = rasters_df_all_2$decay_leks15
+# rasters_df_all_2$tpi_100_s = rasters_df_all_2$Extract_tpi_100
+# rasters_df_all_2$tpi_25_s = rasters_df_all_2$Extract_tpi_25
+# rasters_df_all_2$vrm_11_s = rasters_df_all_2$Extract_vrm_11
+# rasters_df_all_2$slope_s = rasters_df_all_2$Extract_slope
+# rasters_df_all_2$aspect2 = rasters_df_all_2$reclass_aspect_2
+# rasters_df_all_2$aspect3 = rasters_df_all_2$reclass_aspect_3
+# rasters_df_all_2$aspect4 = rasters_df_all_2$reclass_aspect_4
+# rasters_df_all_2$elevation_s = rasters_df_all_2$elevation
+# rasters_df_all_2$decay_majdrt15_s = rasters_df_all_2$decay_majdrt15
+# rasters_df_all_2$decay_rip_s = rasters_df_all_2$decay_rip
+# rasters_df_all_2$aspect = rasters_df_all_2$reclass_asp_1
+# 
+# rasters_df_all_2$WF2predict = predict(predictfold2_7, rasters_df_all_2)
+
+###compare points with heatmap
+test2 = subset(fold2, K_iter==2)
+summer_k2_a = nrow(subset(test2, predictF2 <= 4.60720679511403e-07))#/nrow(test2)
+summer_k2_b = nrow(subset(test2, predictF2 > 4.60720679511403e-07 & predictF2 < 1.24547924662797e-06))#/nrow(test2)
+summer_k2_c = nrow(subset(test2, predictF2 > 1.24547924662797e-06 & predictF2 < 5.63932872497377e-06))#/nrow(test2)
+summer_k2_d = nrow(subset(test2, predictF2 > 5.63932872497377e-06 & predictF2 < 4.06659283205862e-05))#/nrow(test2)
+summer_k2_e = nrow(subset(test2, predictF2 > 4.06659283205862e-05 & predictF2 < 1))#/nrow(test2) 1293/1293
+
+#Kfold 3#####################################################################################################################
+fold3=subset(summeruse.df, K_iter==3 | Use == '0')
+fold3$UniqueID = as.factor(fold3$UniqueID)
+fold3$Use = as.factor(fold3$Use)
+fold3$aspect = as.factor((fold3$aspect))
+fold3$class = as.factor(fold3$class)
+fold3$SEX = as.factor(fold3$SEX)
+fold3$GPS = as.factor(fold3$GPS)
+predictfold3_21= glmer(Use ~ decay_leks15_s + (decay_leks15_s*GPS) + ndvi_50_s + (ndvi_50_s*GPS) + decay_paved15_s + (decay_paved15_s*GPS) + GPS + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = kfolds3, weights = weight )
+summary(predictfold3_21)
+
+#fold3$predictF = predict(predictfold3_7, fold3)
+fold3$predictF3 = (exp(predict(predictfold3_21, fold3, allow.new.levels = T)))/ (1 + exp(predict(predictfold3_21, fold3, allow.new.levels = T)))
+
+#calc raster ranges
+summerGPS = 0.6708
+summerSEX = 0.2696
+summer3_map = exp(-14.79685 + (leks_tif_s *1.36514) + (summerGPS * 4.74691) + (ndvi_tif_s * -0.08193) + (paved_tif_s * 0.30888) + (summerSEX * -1.45798) + (summerGPS * leks_tif_s * 2.19367) + (summerGPS * ndvi_tif_s * -0.91998) + (summerGPS * paved_tif_s * 1.21451))/
+  ( 1 + exp(-14.79685 + (leks_tif_s *1.36514) + (summerGPS * 4.74691) + (ndvi_tif_s * -0.08193) + (paved_tif_s * 0.30888) + (summerSEX * -1.45798) + (summerGPS * leks_tif_s * 2.19367) + (summerGPS * ndvi_tif_s * -0.91998) + (summerGPS * paved_tif_s * 1.21451)))
+points = rasterToPoints(summer3_map)
+points_df = as.data.frame(points)
+points2 = points_df$layer
+Bin = bin_data(points2, bins = 5, binType = 'quantile' )#mltools package
+summary(Bin)
+
+# rasters_df_all_2$decay_leks15_s = rasters_df_all_2$decay_leks15
+# rasters_df_all_2$tpi_100_s = rasters_df_all_2$Extract_tpi_100
+# rasters_df_all_2$tpi_25_s = rasters_df_all_2$Extract_tpi_25
+# rasters_df_all_2$vrm_11_s = rasters_df_all_2$Extract_vrm_11
+# rasters_df_all_2$slope_s = rasters_df_all_2$Extract_slope
+# rasters_df_all_2$aspect2 = rasters_df_all_2$reclass_aspect_2
+# rasters_df_all_2$aspect3 = rasters_df_all_2$reclass_aspect_3
+# rasters_df_all_2$aspect4 = rasters_df_all_2$reclass_aspect_4
+# rasters_df_all_2$elevation_s = rasters_df_all_2$elevation
+# rasters_df_all_2$decay_majdrt15_s = rasters_df_all_2$decay_majdrt15
+# rasters_df_all_2$decay_rip_s = rasters_df_all_2$decay_rip
+# rasters_df_all_2$aspect = rasters_df_all_2$reclass_asp_1
+# 
+# rasters_df_all_2$WF3predict = predict(predictfold3_7, rasters_df_all_2)
+
+###compare points with heatmap
+test3 = subset(fold3, K_iter==3)
+summer_k3_a = nrow(subset(test3, predictF3 <= 4.9846702634939e-07))#/nrow(test3)
+summer_k3_b = nrow(subset(test3, predictF3 > 4.9846702634939e-07 & predictF3 < 1.33924218325211e-06))#/nrow(test3)
+summer_k3_c = nrow(subset(test3, predictF3 > 1.33924218325211e-06 & predictF3 < 5.99520321739717e-06))#/nrow(test3)
+summer_k3_d = nrow(subset(test3, predictF3 > 5.99520321739717e-06 & predictF3 < 4.26378181718959e-05))#/nrow(test3)
+summer_k3_e = nrow(subset(test3, predictF3 > 4.26378181718959e-05 & predictF3 < 1))#/nrow(test3) 1280/1280
+
+#Kfold 4#####################################################################################################################
+fold4=subset(summeruse.df, K_iter==4 | Use == '0')
+fold4$UniqueID = as.factor(fold4$UniqueID)
+fold4$Use = as.factor(fold4$Use)
+fold4$aspect = as.factor((fold4$aspect))
+fold4$class = as.factor(fold4$class)
+fold4$SEX = as.factor(fold4$SEX)
+fold4$GPS = as.factor(fold4$GPS)
+predictfold4_21= glmer(Use ~ decay_leks15_s + (decay_leks15_s*GPS) + ndvi_50_s + (ndvi_50_s*GPS) + decay_paved15_s + (decay_paved15_s*GPS) + GPS + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = kfolds4, weights = weight )
+summary(predictfold4_21)
+
+#fold4$predictF = predict(predictfold4_7, fold4)
+fold4$predictF4 = (exp(predict(predictfold4_21, fold4, allow.new.levels = T)))/ (1 + exp(predict(predictfold4_21, fold4, allow.new.levels = T)))
+
+#calc raster ranges
+summerGPS = 0.6708
+summerSEX = 0.2696
+summer4_map = exp(-14.8736 + (leks_tif_s *1.3260) + (summerGPS * 4.7875) + (ndvi_tif_s * -0.1098) + (paved_tif_s * 0.3055) + (summerSEX * -1.4638) + (summerGPS * leks_tif_s * 2.2592) + (summerGPS * ndvi_tif_s * -0.9118) + (summerGPS * paved_tif_s * 1.2388))/
+  ( 1 + exp(-14.8736 + (leks_tif_s *1.3260) + (summerGPS * 4.7875) + (ndvi_tif_s * -0.1098) + (paved_tif_s * 0.3055) + (summerSEX * -1.4638) + (summerGPS * leks_tif_s * 2.2592) + (summerGPS * ndvi_tif_s * -0.9118) + (summerGPS * paved_tif_s * 1.2388)))
+points = rasterToPoints(summer4_map)
+points_df = as.data.frame(points)
+points2 = points_df$layer
+Bin = bin_data(points2, bins = 5, binType = 'quantile' )#mltools package
+summary(Bin)
+
+# rasters_df_all_2$decay_leks15_s = rasters_df_all_2$decay_leks15
+# rasters_df_all_2$tpi_100_s = rasters_df_all_2$Extract_tpi_100
+# rasters_df_all_2$tpi_25_s = rasters_df_all_2$Extract_tpi_25
+# rasters_df_all_2$vrm_11_s = rasters_df_all_2$Extract_vrm_11
+# rasters_df_all_2$slope_s = rasters_df_all_2$Extract_slope
+# rasters_df_all_2$aspect2 = rasters_df_all_2$reclass_aspect_2
+# rasters_df_all_2$aspect3 = rasters_df_all_2$reclass_aspect_3
+# rasters_df_all_2$aspect4 = rasters_df_all_2$reclass_aspect_4
+# rasters_df_all_2$elevation_s = rasters_df_all_2$elevation
+# rasters_df_all_2$decay_majdrt15_s = rasters_df_all_2$decay_majdrt15
+# rasters_df_all_2$decay_rip_s = rasters_df_all_2$decay_rip
+# rasters_df_all_2$aspect = rasters_df_all_2$reclass_asp_1
+# 
+# rasters_df_all_2$WF4predict = predict(predictfold4_7, rasters_df_all_2)
+
+###compare points with heatmap
+test4 = subset(fold4, K_iter==4)
+summer_k4_a = nrow(subset(test4, predictF4 <= 4.65488693266782e-07))#/nrow(test4)
+summer_k4_b = nrow(subset(test4, predictF4 > 4.65488693266782e-07 & predictF4 < 1.27306134108827e-06))#/nrow(test4)
+summer_k4_c = nrow(subset(test4, predictF4 > 1.27306134108827e-06 & predictF4 < 5.7453593388635e-06))#/nrow(test4)
+summer_k4_d = nrow(subset(test4, predictF4 > 5.7453593388635e-06 & predictF4 < 4.14566990974933e-05))#/nrow(test4)
+summer_k4_e = nrow(subset(test4, predictF4 > 4.14566990974933e-05 & predictF4 < 1))#/nrow(test4) 1300/1300
+
+#Kfold 5#####################################################################################################################
+fold5=subset(summeruse.df, K_iter==5 | Use == '0')
+fold5$UniqueID = as.factor(fold5$UniqueID)
+fold5$Use = as.factor(fold5$Use)
+fold5$aspect = as.factor((fold5$aspect))
+fold5$class = as.factor(fold5$class)
+fold5$SEX = as.factor(fold5$SEX)
+fold5$GPS = as.factor(fold5$GPS)
+predictfold5_21= glmer(Use ~ decay_leks15_s + (decay_leks15_s*GPS) + ndvi_50_s + (ndvi_50_s*GPS) + decay_paved15_s + (decay_paved15_s*GPS) + GPS + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = kfolds5, weights = weight )
+summary(predictfold5_21)
+
+#fold5$predictF = predict(predictfold5_7, fold5)
+fold5$predictF5 = (exp(predict(predictfold5_21, fold5, allow.new.levels = T)))/ (1 + exp(predict(predictfold5_21, fold5, allow.new.levels = T)))
+
+#calc raster ranges
+summerGPS = 0.6708
+summerSEX = 0.2696
+summer5_map = exp(-14.8565 + (leks_tif_s *1.3426) + (summerGPS * 4.7710) + (ndvi_tif_s * -0.1300) + (paved_tif_s * 0.3146) + (summerSEX * -1.4532) + (summerGPS * leks_tif_s * 2.2338) + (summerGPS * ndvi_tif_s * -0.9301) + (summerGPS * paved_tif_s * 1.2189))/
+  ( 1 + exp(-14.8565 + (leks_tif_s *1.3426) + (summerGPS * 4.7710) + (ndvi_tif_s * -0.1300) + (paved_tif_s * 0.3146) + (summerSEX * -1.4532) + (summerGPS * leks_tif_s * 2.2338) + (summerGPS * ndvi_tif_s * -0.9301) + (summerGPS * paved_tif_s * 1.2189)))
+points = rasterToPoints(summer5_map)
+points_df = as.data.frame(points)
+points2 = points_df$layer
+Bin = bin_data(points2, bins = 5, binType = 'quantile' )#mltools package
+summary(Bin)
+
+# rasters_df_all_2$decay_leks15_s = rasters_df_all_2$decay_leks15
+# rasters_df_all_2$tpi_100_s = rasters_df_all_2$Extract_tpi_100
+# rasters_df_all_2$tpi_25_s = rasters_df_all_2$Extract_tpi_25
+# rasters_df_all_2$vrm_11_s = rasters_df_all_2$Extract_vrm_11
+# rasters_df_all_2$slope_s = rasters_df_all_2$Extract_slope
+# rasters_df_all_2$aspect2 = rasters_df_all_2$reclass_aspect_2
+# rasters_df_all_2$aspect3 = rasters_df_all_2$reclass_aspect_3
+# rasters_df_all_2$aspect4 = rasters_df_all_2$reclass_aspect_4
+# rasters_df_all_2$elevation_s = rasters_df_all_2$elevation
+# rasters_df_all_2$decay_majdrt15_s = rasters_df_all_2$decay_majdrt15
+# rasters_df_all_2$decay_rip_s = rasters_df_all_2$decay_rip
+# rasters_df_all_2$aspect = rasters_df_all_2$reclass_asp_1
+# 
+# rasters_df_all_2$WF5predict = predict(predictfold5_7, rasters_df_all_2)
+
+###compare points with heatmap
+test5 = subset(fold5, K_iter==5)
+summer_k5_a = nrow(subset(test5, predictF5 <= 4.67548783129777e-07))#/nrow(test5)
+summer_k5_b = nrow(subset(test5, predictF5 > 4.67548783129777e-07 & predictF5 < 1.30267514036492e-06))#/nrow(test5)
+summer_k5_c = nrow(subset(test5, predictF5 > 1.30267514036492e-06 & predictF5 < 5.82341342753929e-06))#/nrow(test5)
+summer_k5_d = nrow(subset(test5, predictF5 > 5.82341342753929e-06 & predictF5 < 4.20907993688331e-05))#/nrow(test5)
+summer_k5_e = nrow(subset(test5, predictF5 > 4.20907993688331e-05 & predictF5 < 1))#/nrow(test5) 1299/1299
+
+####################################################################################################################################
+###create final heat map
+summer_21 = glmer(Use ~ decay_leks15_s + (decay_leks15_s*GPS) + ndvi_50_s + (ndvi_50_s*GPS) + decay_paved15_s + (decay_paved15_s*GPS) + GPS + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data =summeruse.df, weights = weight )
+
+summary(summer_21)
+
+summer21_map = exp(-15.1910 + (leks_tif_s *1.3812) + (summerGPS * 4.9165) + (ndvi_tif_s * -0.1115) + (paved_tif_s * 0.3120) + (summerSEX * -1.5037) + (summerGPS * leks_tif_s * 2.2973) + (summerGPS * ndvi_tif_s * -0.9163) + (summerGPS * paved_tif_s * 1.2678))/
+  ( 1 + exp(-15.1910 + (leks_tif_s *1.3812) + (summerGPS * 4.9165) + (ndvi_tif_s * -0.1115) + (paved_tif_s * 0.3120) + (summerSEX * -1.5037) + (summerGPS * leks_tif_s * 2.2973) + (summerGPS * ndvi_tif_s * -0.9163) + (summerGPS * paved_tif_s * 1.2678)))
+
+points = rasterToPoints(summer21_map)
+points_df = as.data.frame(points)
+points2 = points_df$layer
+Bin = bin_data(points2, bins = 5, binType = 'quantile' )
+summary(Bin)
+
+m = c(0, 3.43124516769742e-07, 1, 
+      3.43124516769742e-07,  9.54695602409388e-07, 2, 
+      9.54695602409388e-07, 4.48595089635245e-06, 3, 
+      4.48595089635245e-06, 3.39923041933312e-05, 4,
+      3.39923041933312e-05, 1, 5)
+rclmat = matrix(m, ncol=3, byrow=TRUE)
+rclmat
+
+recSummer = reclassify(summer21_map, rclmat, include.lowest = TRUE)
+summary(recSummer)
+writeRaster(recSummer, 'summer_predict_recR.tif', overwrite = TRUE)
