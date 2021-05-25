@@ -1,0 +1,228 @@
+###Summer RSF###
+#Create RSF for summer points of sage grouse
+
+###Establish ArcGIS Bridge
+arc.check_product()
+
+summer = arc.open(path = "H:\\School\\GIS\\Thesis_RSF\\Thesis_RSF.gdb\\summer_merge")
+summer.df = arc.select(summer)
+
+###scale fields
+summer.df$dist_paved_s = scale(summer.df$dist_paved)
+summer.df$dist_mindrt_s = scale(summer.df$dist_mindrt)
+summer.df$dist_leks_s = scale(summer.df$dist_leks)
+summer.df$dist_lake_s = scale(summer.df$dist_lake)
+summer.df$ndvi_50_s = scale(summer.df$ndvi_50)
+summer.df$ndvi_25_s = scale(summer.df$ndvi_25)
+summer.df$ndvi_10_s = scale(summer.df$ndvi_10)
+summer.df$slope_s = scale(summer.df$slope)
+summer.df$elevation_s = scale(summer.df$elevation)
+summer.df$dist_dist_lines_s = scale(summer.df$dist_dist_lines)
+summer.df$dist_trans_lines_s = scale(summer.df$dist_trans_lines)
+summer.df$dist_powerline_s = scale(summer.df$dist_powerline)
+summer.df$dist_ag_s = scale(summer.df$dist_ag)
+summer.df$tpi_100_s = scale(summer.df$tpi_100)
+summer.df$tpi_50_s = scale(summer.df$tpi_50)
+summer.df$tpi_25_s = scale(summer.df$tpi_25)
+summer.df$tpi_10_s = scale(summer.df$tpi_10)
+summer.df$vrm_11_s = scale(summer.df$vrm_11)
+summer.df$vrm_7_s = scale(summer.df$vrm_7)
+summer.df$vrm_5_s = scale(summer.df$vrm_5)
+summer.df$dist_tree_s = scale(summer.df$dist_tree)
+summer.df$dist_sage_s = scale(summer.df$dist_sage)
+summer.df$dist_grass_s = scale(summer.df$dist_grass)
+summer.df$dist_rip_s = scale(summer.df$dist_rip)
+summer.df$dist_struct_s = scale(summer.df$dist_struct)
+summer.df$dist_majdrt_s = scale(summer.df$dist_majdrt)
+summer.df$decay_pline_s = scale(summer.df$decay_pline_05)
+summer.df$decay_dline_s = scale(summer.df$decay_dline05)
+summer.df$decay_tline_s = scale(summer.df$decay_tline05)
+summer.df$decay_majdrt_s = scale(summer.df$decay_majdrt)
+summer.df$decay_mindrt_s = scale(summer.df$decay_mindrt)
+summer.df$decay_paved_s = scale(summer.df$decay_paved)
+summer.df$decay_struct_s = scale(summer.df$decay_struct)
+summer.df$decay_ag_s = scale(summer.df$decay_ag)
+summer.df$decay_leks_s = scale(summer.df$decay_leks)
+summer.df$decay_lake_s = scale(summer.df$decay_lake)
+summer.df$decay_tree_s = scale(summer.df$decay_tree)
+summer.df$decay_sage_s = scale(summer.df$decay_sage)
+summer.df$decay_grass_s = scale(summer.df$decay_grass)
+summer.df$decay_rip_s = scale(summer.df$decay_rip)
+summer.df$decay_pline15_s = scale(summer.df$decay_pline_15)
+summer.df$decay_dline15_s = scale(summer.df$decay_dline15)
+summer.df$decay_tline15_s = scale(summer.df$decay_tline15)
+summer.df$decay_majdrt15_s = scale(summer.df$decay_majdrt15)
+summer.df$decay_mindrt15_s = scale(summer.df$decay_mindrt15)
+summer.df$decay_paved15_s = scale(summer.df$decay_paved15)
+summer.df$decay_struct15_s = scale(summer.df$decay_struct15)
+summer.df$decay_ag15_s = scale(summer.df$decay_ag15)
+summer.df$decay_leks15_s = scale(summer.df$decay_leks15)
+summer.df$decay_lake15_s = scale(summer.df$decay_lake15)
+summer.df$decay_tree15_s = scale(summer.df$decay_tree15)
+summer.df$decay_sage15_s = scale(summer.df$decay_sage15)
+summer.df$decay_grass15_s = scale(summer.df$decay_grass15)
+summer.df$decay_rip15_s = scale(summer.df$decay_rip15)
+
+summer.df$UniqueID = as.factor(summer.df$UniqueID)
+summer.df$Use = as.factor((summer.df$Use))
+summer.df$aspect = as.factor((summer.df$aspect))
+summer.df$class = as.factor(summer.df$class)
+summer.df$SEX = as.factor(summer.df$SEX)
+
+###check correlation
+nums <- unlist(lapply(summer.df, is.numeric))
+cor_sub = summer.df[ , nums]
+cor_sub #= sapply(summer.df, "is.numeric")
+x = abs(cor(cor_sub))
+write.csv(cor(cor_sub))
+
+ntable = symnum(x, cutpoints = c(0.0, 0.1, 0.5, 0.6, 0.8, 0.9, 1),
+                symbols = c(" ", ".", ",", "+", "*", "B"),
+                abbr.colnames = FALSE)
+#the above works but harder to read and cuts off stuff
+tail(ntable, 56)
+
+b_cor = subset(melt(x), value > .6) #this line gives a nice var 1/var 2 matrix
+write.csv(b_cor, 'cor_summer.csv')
+
+#######
+cor(summer.df$dist_dist_lines_s, summer.df$decay_dline_s)
+############################################################################################################################################################################################################################
+#Anthropogenic
+ma1 = glmer(Use ~ decay_majdrt_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma2 = glmer(Use ~ decay_paved_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma3 = glmer(Use ~ decay_struct_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma4 = glmer(Use ~ decay_pline_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma5 = glmer(Use ~ decay_tline_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma6 = glmer(Use ~ decay_dline_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma7 = glmer(Use ~ decay_mindrt_s + decay_pline_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma8 = glmer(Use ~ decay_mindrt_s + decay_tline_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma9 = glmer(Use ~ decay_mindrt_s + decay_dline_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma10 = glmer(Use ~ decay_majdrt_s + decay_ag_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma11 = glmer(Use ~ decay_struct_s + decay_ag_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma12 = glmer(Use ~ decay_majdrt15_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma13 = glmer(Use ~ decay_paved15_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma14 = glmer(Use ~ decay_struct15_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma15 = glmer(Use ~ decay_pline15_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma16 = glmer(Use ~ decay_tline15_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+ma16 = glmer(Use ~ decay_dline15_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+mnull = glm(Use ~ 1, family = 'binomial', data = summer.df, weights = weight)
+
+
+model.sel(ma1, ma2, ma3, ma4, ma5, ma6, ma7, ma8, ma9, ma10, ma11, ma12, ma13, ma14, ma15, ma16, mnull)
+
+##########################################################################################################################################################################################################################
+#Topographic
+mtg1 = glmer(Use ~ elevation_s + slope_s + aspect + tpi_25_s + tpi_100_s + vrm_11_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )#bigger scale ruggedness
+mtg2 = glmer(Use ~ elevation_s + slope_s + aspect + tpi_10_s + tpi_50_s + vrm_5_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )#smaller scale ruggedness
+mtg3 = glmer(Use ~ elevation_s + slope_s + aspect + tpi_25_s + tpi_100_s + vrm_7_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+mt4 = glmer(Use ~ elevation_s + slope_s + aspect + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+mt5 = glmer(Use ~ elevation_s + vrm_5_s + tpi_10_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+mt6 = glmer(Use ~ slope_s + aspect + vrm_5_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+mt7 = glmer(Use ~ slope_s + aspect + vrm_7_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+mt8 = glmer(Use ~ slope_s + aspect + vrm_11_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+mt9 = glmer(Use ~ tpi_10_s + vrm_5_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+mt10 = glmer(Use ~ tpi_100_s + vrm_5_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+mt11 = glmer(Use ~ tpi_10_s + vrm_11_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+mt12 = glmer(Use ~ tpi_100_s + vrm_11_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+
+model.sel(mtg1, mtg2, mtg3, mt4, mt5, mt6, mt7, mt8, mt9, mt10, mt11, mt12, mnull)
+
+table = model.sel(mtg1, mtg2, mtg3, mt4, mt5, mt6, mt7, mt8, mt9, mt10, mt11, mt12, mnull)
+write.csv(table, 'topo_results.csv')
+
+##########################################################################################################################################################################################################################
+#Biologic
+mbg1 = glmer(Use ~ decay_leks_s + ndvi_50_s + class + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+mbg2 = glmer(Use ~ decay_lake_s + ndvi_50_s + class + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mbg3 = glmer(Use ~ decay_tree_s + decay_sage_s + decay_rip_s + ndvi_50_s + class + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+mb4 = glmer(Use ~ ndvi_10_s + class + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb5 = glmer(Use ~ ndvi_10_s + class + decay_sage_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb6 = glmer(Use ~ ndvi_10_s + class + decay_tree_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb7 = glmer(Use ~ ndvi_10_s + class + decay_grass_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb8 = glmer(Use ~ ndvi_25_s + class + decay_sage_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb9 = glmer(Use ~ ndvi_50_s + class + decay_sage_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb10 = glmer(Use ~ decay_lake_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb11 = glmer(Use ~ decay_leks_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb12 = glmer(Use ~ decay_sage_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb13 = glmer(Use ~ ndvi_10_s + class + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb14 = glmer(Use ~ ndvi_25_s + class + decay_grass_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb15 = glmer(Use ~ ndvi_25_s + class + decay_tree_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb16 = glmer(Use ~ ndvi_50_s + decay_rip_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb17 = glmer(Use ~ decay_leks_s + decay_rip_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb18 = glmer(Use ~ ndvi_10_s + class + decay_sage15_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb19 = glmer(Use ~ ndvi_10_s + class + decay_tree15_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb20 = glmer(Use ~ ndvi_10_s + class + decay_grass15_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb21 = glmer(Use ~ ndvi_25_s + class + decay_sage15_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb22 = glmer(Use ~ ndvi_50_s + class + decay_sage15_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb23 = glmer(Use ~ decay_lake15_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight ) 
+mb24 = glmer(Use ~ decay_leks15_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+model.sel(mbg1, mbg2, mbg3, mb4, mb5, mb6, mb7, mb8, mb9, mb10, mb11, mb12, mb13, mb14, mb15, mb16, mb17, mb18, mb19, mb20, mb21, mb22, mb23, mb24, mnull )
+
+tableb = model.sel(mbg1, mbg2, mbg3, mb4, mb5, mb6, mb7, mb8, mb9, mb10, mb11, mb12, mb13, mb14, mb15, mb16, mb17, mb18, mb19, mb20, mb21, mb22, mb23, mb24, mnull )
+write.csv(tableb, 'bio_results_fall.csv')
+##########################################################################################################################################################################################################################
+#Phase 2
+model.sel(mbg1glm, mtg1glm, ma6glm, ma9glm, mnull)
+x1g =  glmer(Use ~ decay_leks_s + decay_sage_s + decay_rip_s + ndvi_50_s + tpi_100_s + tpi_10_s + vrm_11_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )#all of the best variables, minus anthropogenic
+x2g =  glmer(Use ~ decay_lake_s + vrm_5_s + decay_rip_s + ndvi_50_s + tpi_100_s + tpi_10_s + decay_sage_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+x3 = glmer(Use ~ tpi_10_s + tpi_100_s + vrm_11_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )#topographic average ish model
+x4 = glmer(Use ~ decay_majdrt_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+x5 = glmer(Use ~ decay_paved_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+x6 = glmer(Use ~ decay_struct_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+x7 = glmer(Use ~ decay_pline_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+x8 = glmer(Use ~ decay_tline_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+x9 = glmer(Use ~ decay_leks_s + decay_sage_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+x10 = glmer(Use ~ decay_lake_s + decay_sage_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+x11 = glmer(Use ~ decay_lake_s + decay_sage_s + decay_rip_s + ndvi_50_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+x12 = glmer(Use ~ decay_leks_s + decay_sage_s + decay_rip_s + ndvi_50_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+x13 = glmer(Use ~ decay_majdrt_s + vrm_11_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+x14 = glmer(Use ~ decay_paved_s + tpi_100_s + vrm_11_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+x15 = glmer(Use ~ decay_pline_s + vrm_11_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+
+model.sel(x1g, x2g, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, mnull)
+###########################################################################################################################################################################################################################
+#phase 2, but only including Bio and topo. Then add anthro to it.
+y1g =  glmer(Use ~ class + decay_leks15_s + decay_sage_s + decay_rip_s + ndvi_50_s + tpi_100_s + tpi_25_s + vrm_11_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+y2g =  glmer(Use ~ decay_leks15_s + decay_sage_s + decay_rip_s + ndvi_50_s + tpi_100_s + tpi_25_s + vrm_11_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+y3 = glmer(Use ~ tpi_100_s + vrm_11_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )#top topo model
+y4 = glmer(Use ~ decay_leks_s + decay_sage_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+y5 = glmer(Use ~ class + decay_sage_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+y6 = glmer(Use ~ decay_sage_s + decay_rip_s + ndvi_50_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+y7 = glmer(Use ~ decay_leks_s + decay_sage_s + decay_rip_s + ndvi_50_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+y8 = glmer(Use ~ decay_leks_s + decay_sage_s + decay_rip_s + ndvi_50_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+y9 = glmer(Use ~ decay_leks15_s + decay_sage15_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+y10 = glmer(Use ~ tpi_100_s + decay_sage15_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+y11 = glmer(Use ~ tpi_25_s + decay_sage15_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+y12 = glmer(Use ~ vrm_11_s + decay_sage_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+y13 = glmer(Use ~ tpi_100_s + vrm_7_s + decay_leks_s + decay_sage_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+y14 = glmer(Use ~ tpi_100_s + vrm_11_s + decay_sage_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+model.sel(y1g, y2g, y3, y4, y5, y6, y7, y8, y9, y10, y11, y12, y13, y14, mt4, mtg1, mtg3, mb24, mnull)
+mtbav = model.avg(y3, y4, y5, y9, y10, y11, y12)
+summary(mtbav)
+
+tablebt = model.sel(y1g, y2g, y3, y4, y5, y6, y7, y8, y9, y10, y11, y12, y13, y14, mt4, mtg1, mtg3, mb24, mnull)
+write.csv(tableba, 'bt_results_fall.csv')
+###################################################################################################################################################################################################################
+#phase 2, add anthropogenic
+zg1 = glmer(Use ~ tpi_100_s + tpi_25_s + vrm_11_s + aspect + elevation_s + slope_s + ndvi_50_s + decay_sage_s + decay_rip_s + decay_leks15_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+z2 = glmer(Use ~ tpi_100_s + tpi_25_s + vrm_11_s + aspect + elevation_s + slope_s + decay_majdrt_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+z3 = glmer(Use ~ tpi_100_s + tpi_25_s + vrm_11_s + aspect + elevation_s + slope_s + decay_pline_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+z4 = glmer(Use ~ tpi_100_s + tpi_25_s + vrm_11_s + aspect + elevation_s + slope_s + decay_dline_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+z5 = glmer(Use ~ tpi_100_s + tpi_25_s + vrm_11_s + aspect + elevation_s + slope_s + decay_tline_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )#top topo model
+z6 = glmer(Use ~ tpi_100_s + tpi_25_s + vrm_11_s + aspect + elevation_s + slope_s + decay_struct_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+z7 = glmer(Use ~ tpi_100_s + tpi_25_s + vrm_11_s + aspect + elevation_s + slope_s + decay_pline15_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+z8 = glmer(Use ~ tpi_100_s + tpi_25_s + vrm_11_s + aspect + elevation_s + slope_s + decay_mindrt_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+z9 = glmer(Use ~ tpi_100_s + tpi_25_s + vrm_11_s + aspect + elevation_s + slope_s + decay_ag_s+ (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+z10 = glmer(Use ~ tpi_100_s + tpi_25_s + vrm_11_s + aspect + elevation_s + slope_s + decay_mindrt_s + decay_pline_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+z11 = glmer(Use ~ tpi_100_s + tpi_25_s + vrm_11_s + aspect + elevation_s + slope_s + decay_mindrt_s + decay_struct_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+z12 = glmer(Use ~ tpi_100_s + tpi_25_s + vrm_11_s + aspect + elevation_s + slope_s + decay_paved_s + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+#z13 = glmer(Use ~  + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+#z14 = glmer(Use ~  + (1|Year) + SEX + (1|UniqueID), family = 'binomial', nAGQ = 0, data = summer.df, weights = weight )
+
+#summary(zg1)
+model.sel(zg1, z2, z3, z4, z5, z6, z7, z8, z9, z10, z11, z12, mtg1, mtg3, mb24, mbg3, mnull)
+
+average = model.avg(zg1, mb24)
+summary(average)
+save.image()
