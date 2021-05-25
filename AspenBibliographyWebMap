@@ -1,0 +1,603 @@
+<html>
+<head>
+	
+	<title>Aspen Spatial Bibliography</title>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" type="text/css" href="webmap.css">
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+	<link rel="stylesheet" href="Leaflet.Basemaps-master/L.Control.Basemaps.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
+	<link rel="stylesheet" href="leaflet-search-master/src/leaflet-search.css" />
+	<link rel="stylesheet" href="leaflet-fusesearch-master/src/leaflet.fusesearch.css" />
+	<link rel= "stylesheet" href="LeafletSlider-master/jquery-ui.css"/>
+	<script src="Fuse-master/dist/fuse.js"></script>
+	<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+	<script src="points_fixed.js"></script>
+	<script src="Leaflet.Basemaps-master/L.Control.Basemaps-min.js"></script>
+	<script src="leaflet-search-master/src/leaflet-search.js"></script>
+	<script src="leaflet-fusesearch-master/src/leaflet.fusesearch.js"></script>
+	<script src="LeafletSlider-master/jquery-1.9.1.min.js"></script>
+	<script src="LeafletSlider-master/SliderControl.js"></script>
+	<script src="LeafletSlider-master/jquery-ui.js"></script>
+<style>
+#notification {
+	  position: absolute;
+	  z-index: 10000;
+	  background-color: white;
+	  //bottom: 40%;
+	  height:auto;
+	  length:auto;
+	  top: 50%;
+	  right: 25%;
+	  left:45%;
+	  border-radius: 15px;
+	  text-align: center;
+	  opacity: 0.75;
+	  word-wrap: break-word;
+	  overflow-y: auto;
+	  display:none;
+	}
+</style>
+<script>
+	var map;
+	var geojson;
+	var sideSize;
+	var streets, imagery, baseMaps, basemaps;
+	var mydatalayer, popup, mbURL, mbAttr;
+	var pointextent;
+	var searchCtrl;
+	var filters={"Coordinate":{"Provided":"on", "Estimated":"on", "Generalized":"on"}};
+	var initBounds, initCount, newCount, count;
+	var list = [];
+	var coordlist = [];
+	var about, cart;
+	var cartList = []
+	var s, res;
+	var extentresults = [];
+	var notif = document.getElementById("notification");
+	
+	mbURL = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoicmhvd2VsbDIiLCJhIjoiY2s2ODZ1d3M2MDF5ajNqbnd2MDFlejBhZSJ9.n6JlFE6HsYHDDZwd7OxBFQ'
+	mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+				'<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+				'Imagery � <a href="https://www.mapbox.com/">Mapbox</a>'
+	popup = L.popup();
+	
+	
+	function init(){
+
+		/*var searchCtrl = L.control.fuseSearch()
+			searchCtrl.addTo(map);
+			searchCtrl.indexFeatures(geojson, "Title");
+			searchControlTitle = new L.Control.Search({
+			layer: geojson, 
+			propertyName: 'Title',
+			circleLocation:true,
+			zoom:10,
+			initial:false,
+			collapsed:false,
+			container:'search-container-title'});*/
+		streets = L.tileLayer(mbURL, {
+			id: 'mapbox/streets-v11',
+			tileSize: 512, 
+			zoomOffset: -1, 
+			attribution: mbAttr, 
+			maxZoom : 11
+			});
+			
+		map = L.map('mapid', {
+			layers: [streets],
+			//center: [46.64, -45.58], 
+			center: [0, 0], 
+			zoom: 2, 
+			});
+		map.on('moveend', renumber)
+		map.on('moveend', scale)
+		map.on('moveend', addAllBut)
+			
+		/*function onEachPopup(feature, layer) {
+			layer.bindPopup("<b>Authors: </b>" + feature.properties.Author + "<br><b>Title: </b>" + feature.properties.Title + 
+			"<br><b>Publication: </b>" + feature.properties.Publicatio + "<br><b>Year: </b>" + feature.properties.Year + 
+			"<br><b>Keywords: </b>" + feature.properties.Keywords + "<br><b>URL: </b>" + 
+			'<a href= "' + feature.properties.URL + '" target = "_blank" style = "word-wrap: break-word">' + feature.properties.URL + 
+			"</a>" + "<br><button type='button' onclick = 'addToCart(" + layer._leaflet_id + ")'>Add to Cart</button>")
+			//"</a>" + "<br><button type='button' onclick = 'addToCart()'>Add to Cart</button>")
+			//var content = popup.getContent();
+			/* Got this online, isn't working
+			layer.on('click', onClick);
+			console.log(content)
+			function onClick(e) {
+				var popup = e.layer.getPopup();
+				var content = popup.getContent();
+
+				console.log(content);
+			}
+		};	//getContent()*/
+				
+		function getColor (att){
+			return 	att == 'Provided' ? '#1A28DE' :
+				att == 'Estimated' ? '#F0401B' :
+				att == 'Generalized' ? '#3FBA23':
+										'#275B1B';
+		};
+		
+						
+		geojson = L.geoJSON(pointfixed, {
+			pointToLayer: function (feature, latlng){
+				return L.circleMarker(latlng, {
+					radius: 3,
+					fillColor: getColor(feature.properties.Coordinate),
+					color: "#000",
+					fillOpacity: 1,
+					weight: 1
+					}); 
+			},
+			//onEachFeature : onEachPopup, function(feature, layer){feature.layer=layer}
+		}).addTo(map);
+		
+		geojson.eachLayer(function(layer){
+
+			//working popup, try to make it so if it's in the cartlist it will display the right button
+			popup = layer.bindPopup("<b>Authors: </b>" + layer.feature.properties.Author + "<br><b>Title: </b>" + layer.feature.properties.Title + 
+			"<br><b>Publication: </b>" + layer.feature.properties.Publicatio + "<br><b>Year: </b>" + layer.feature.properties.Year + 
+			"<br><b>Keywords: </b>" + layer.feature.properties.Keywords + "<br><b>URL: </b>" + 
+			'<a href= "' + layer.feature.properties.URL + '" target = "_blank" style = "word-wrap: break-word">' + layer.feature.properties.URL + 
+			"</a>" + "<br><button id = 'add-" + layer._leaflet_id + "' type='button' onclick = 'addToCart2(" + layer._leaflet_id + ")'>Add to Cart</button>");
+
+			//need to figure out where to put this. Needs to be called after the list is made
+			/*if ($("#cartlist #" + layer._leaflet_id).length){
+				popup = layer.bindPopup("<b>Authors: </b>" + layer.feature.properties.Author + "<br><b>Title: </b>" + layer.feature.properties.Title + 
+				"<br><b>Publication: </b>" + layer.feature.properties.Publicatio + "<br><b>Year: </b>" + layer.feature.properties.Year + 
+				"<br><b>Keywords: </b>" + layer.feature.properties.Keywords + "<br><b>URL: </b>" + 
+				'<a href= "' + layer.feature.properties.URL + '" target = "_blank" style = "word-wrap: break-word">' + layer.feature.properties.URL + 
+				"</a>" + "<br><button id = 'add-" + layer._leaflet_id + "' type='button' onclick = 'removeFromCart(" + layer._leaflet_id + ")'>Add to Cart</button>");
+			} else {
+				popup = layer.bindPopup("<b>Authors: </b>" + layer.feature.properties.Author + "<br><b>Title: </b>" + layer.feature.properties.Title + 
+				"<br><b>Publication: </b>" + layer.feature.properties.Publicatio + "<br><b>Year: </b>" + layer.feature.properties.Year + 
+				"<br><b>Keywords: </b>" + layer.feature.properties.Keywords + "<br><b>URL: </b>" + 
+				'<a href= "' + layer.feature.properties.URL + '" target = "_blank" style = "word-wrap: break-word">' + layer.feature.properties.URL + 
+				"</a>" + "<br><button id = 'add-" + layer._leaflet_id + "' type='button' onclick = 'addToCart2(" + layer._leaflet_id + ")'>Add to Cart</button>");
+			}*/
+			layer.feature.layer = layer;
+		});
+		
+		imagery = L.tileLayer(mbURL, {
+			id: 'mapbox/satellite-streets-v10', 
+			tileSize: 512, 
+			zoomOffset: -1, 
+			attribution: mbAttr, 
+			maxZoom : 11
+		});
+		
+		baseMaps = {
+			"Streets" : streets,
+			"Imagery" : imagery
+		};
+			
+		basemaps = [streets, imagery];
+			map.addControl(L.control.basemaps({
+				basemaps: basemaps,
+				tileX: 0,  // tile X coordinate
+				tileY: 0,  // tile Y coordinate
+				tileZ: 1,	// tile zoom level
+				position: 'bottomleft'
+		}));
+
+		//implement fuse search copied from https://github.com/naomap/leaflet-fusesearch
+		var searchCtrl = L.control.fuseSearch({showInvisibleFeatures:false, placeholder:'Search records', threshold:0.2});
+		searchCtrl.addTo(map);
+		
+		searchCtrl.indexFeatures(pointfixed, ['Title', 'Author', 'Year', 'Keywords']);
+
+
+	//initBounds = map.getBounds();
+	//initCount = geojson.getLayers().length
+	//geojson.eachlayer(function(layer){
+	//	coordlist.push()
+	//}
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/*//time slider test, from docs
+	var sliderControl = L.control.sliderControl({position: "topright", layer: geojson});
+
+	//Make sure to add the slider to the map ;-)
+	map.addControl(sliderControl);
+
+	//And initialize the slider
+	sliderControl.startSlider();
+	$('#slider-timestamp').html(options.markers[ui.value].feature.properties.time.substr(0,19));
+	sliderControl = L.control.sliderControl({position: "topleft", layer: geojson, timeAttribute : "Year", range: true});
+	*/
+	//timeslider 2, swiped from mormon places
+	$("#timeslide").slider({
+		min:1914,
+		max:2020,
+		stop: function(event,ui) {
+			document.getElementById("year").value = String(ui.value);
+//			console.log(ui.value);
+			filteryear();
+		}
+	  })
+	  .append($('<p style="left: 0%">1830</label>'))
+	  .append($('<p style="left: 20%">1850</label>'))
+	  .append($('<p style="left: 40%">1870</label>'))
+	  .append($('<p style="left: 60%">1890</label>'))
+	  .append($('<p style="left: 80%">1910</label>'))
+	  .append($('<p style="left: 100%">1930</label>'));
+	//keep the below }; for init
+	};		
+
+	function isPresent(a, y) {
+		if (!y) return 'yes';
+		if (a.Coordinate == lyr) return 
+		return 'no';
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//check/uncheck coordinate type
+	function filterlyr(lyr) {
+		if (filters.Coordinate[lyr] == "on") {
+			filters.Coordinate[lyr] = "off";
+			document.getElementById("leg-"+lyr).style.opacity="0.55";
+			document.getElementById("chk"+lyr).checked = false;
+			geojson.eachLayer(function(layer){
+				if (layer.feature.properties.Coordinate == lyr){
+				layer._path.style.visibility = "hidden"}
+			}); 
+			renumber();	
+			
+		} else {
+			filters.Coordinate[lyr] = "on";
+			document.getElementById("leg-"+lyr).style.opacity="1";
+			document.getElementById("chk"+lyr).checked = true;
+			geojson.eachLayer(function(layer){
+				if (layer.feature.properties.Coordinate == lyr){
+				layer._path.style.visibility = "visible"}
+			});
+			filterYear();
+			renumber();
+		}
+	};
+	//build list of visible records
+	function renumber(e){
+		//notif = document.getElementById("notification");
+		//var nw = window.getComputedStyle(notif, null);
+		//console.log(nw.display);
+		/*if (nw.display == "none"){
+			console.log("it's none");
+			notif.style.display = "block";
+			nw = window.getComputedStyle(notif, null);*/
+			b = map.getBounds();
+			elem = document.getElementById("list");
+			res = document.getElementById("totalsresults");
+			extentresults = []
+			if (s >= 5 && document.getElementById("myonoffswitch").checked == true){
+				notif = document.getElementById("notification");
+				//var doc = document.styleSheets[6].cssRules[0].style;
+				//console.log(doc);
+				//notif.style.display = "block"; //also if I set it this way instead of using setProperty(line 276) it still doesn't work
+				
+				//disp = doc.setProperty('display','block');//this works see line 281
+				
+				//setTimeout(function() { alert("my message"); }, 50); also works but changing the time doesn't do anything, it doesn't display until the function is done
+				//alert(window.getComputedStyle(notif, null).height);//this does nothing but works- returns "109px", both as is and sent to console	
+				//console.log(notif.offsetHeight);///this does nothing but it is working when sent to console - returns "109". This is one of the common answers that "all you have to do is run this"
+				//console.log(document.styleSheets[6].cssRules[0].style.display);///this does nothing but it is working when sent to console - returns "block"
+				document.getElementById("list").innerHTML = "";
+				//res.innerHTML = "Listing visible publications. Please wait...";
+				list = [];//this is needed only for the count of visible publications and populate the cart
+				geojson.eachLayer(function (lyr){
+					f = lyr.feature;
+					LL = lyr.getLatLng();
+					if (b.contains(LL) && filters.Coordinate[f.properties.Coordinate] == 'on'){
+						list.push(f);
+						ctype = f.properties.Coordinate;
+						extentresults.push(
+							'<button id = "butOpenPopup" onclick = "openPopup(' + lyr._leaflet_id + ')" style = "margin:0;padding:3px; text-align:left"><li style="padding:5px"><span class="' + ctype + '">&nbsp;&bull;</span>  <b>' + f.properties.Author + ".</b> " + f.properties.Title + ". " + f.properties.Year + ". " + "<b>URL: </b>" + 
+							'<a href= "'+ f.properties.URL +'" target = "_blank" style = "word-wrap: break-word">' + f.properties.URL + "</a>" + '</li></button>'
+							);
+						} else {
+						}
+				});
+					console.log('done adding');
+					elem.innerHTML = extentresults;
+					count = list.length;
+					count2 = extentresults.length
+					res.innerHTML = count2 + ' visible records. Click to open popup';
+					addAllBut();
+					/*button = document.getElementById("butAddAll");
+						if (list.length >= 1){
+						button.style.display = "inline-block";
+						} else {
+						button.style.display = "none";
+						} notif.style.display = "none";*/
+			} 
+
+	};
+	
+	function scale(){
+		s = map.getZoom()
+		console.log(s + ' scale')
+	};
+	/////addToCart works ish, but adds the whole list and it's messy
+	/*function addToCart(i){
+		content.push(geojson._layers[i].feature.properties.Title)
+		content.forEach(function (c){
+			document.getElementById("cartlist").innerHTML += '<li>' + content + '</li>' 
+		})
+		//document.getElementById("cartlist").innerHTML += '<li>' + content + '</li>' 
+		//console.log(content)
+	};*/
+	
+	function addToCart(i){
+		console.log(i)
+		citation = "<b>" + geojson._layers[i].feature.properties.Title + "</b>. <br>" + geojson._layers[i].feature.properties.Author + ". (" +
+			geojson._layers[i].feature.properties.Year + ") " + geojson._layers[i].feature.properties.Publicatio + '<br><a href= "'+ 
+			geojson._layers[i].feature.properties.URL +'" target = "_blank" style = "word-wrap: break-word">' + geojson._layers[i].feature.properties.URL + "</a>";
+		document.getElementById("cartlist").innerHTML += "<li id = '" + geojson._layers[i]._leaflet_id + "'>" + citation + 
+			"<br><button type='button' onclick = 'removeFromCartC(" + geojson._layers[i]._leaflet_id + ")'>Remove</button></li>";
+		item = document.getElementById("'add-" + i + "'").innerHTML;
+		console.log(item);
+		document.getElementById("'add-" + i + "'").innerHTML = 'Remove From Cart';
+	};
+	
+	function addToCart2(i){
+		cButton = document.getElementById("add-" + i)
+		console.log(cButton)
+		if (cButton.innerHTML == 'Add to Cart'){
+		citation = "<b>" + geojson._layers[i].feature.properties.Title + "</b>. <br>" + geojson._layers[i].feature.properties.Author + ". (" +
+			geojson._layers[i].feature.properties.Year + ") " + geojson._layers[i].feature.properties.Publicatio + '<br><a href= "'+ 
+			geojson._layers[i].feature.properties.URL +'" target = "_blank" style = "word-wrap: break-word">' + geojson._layers[i].feature.properties.URL + "</a>";
+		//
+		document.getElementById("cartlist").innerHTML += "<li id = '" + geojson._layers[i]._leaflet_id + "'>" + citation + 
+			"<br><button type='button' onclick = 'removeFromCartC(" + geojson._layers[i]._leaflet_id + ")'>Remove</button></li>";
+		//cartdict[geojson._layers[i]] = "<li id = '" + geojson._layers[i]._leaflet_id + "'>" + citation + 
+		//	"<br><button type='button' onclick = 'removeFromCart(" + geojson._layers[i]._leaflet_id + ")'>Remove</button></li>";
+		cButton.innerHTML = 'Remove From Cart';
+		cButton.setAttribute("onclick", "removeFromCart(" + i + ")");
+		} else if (cButton.innerHTML == 'Remove From Cart'){
+			cButton.innerHTML = 'Add to Cart';
+			cButton.setAttribute("onclick", "addToCart2(" + i + ")");
+		}
+		document.getElementById('cartTotal').innerHTML = document.getElementById('cartlist').children.length + " items"
+	};
+	
+	function addAll(){
+		list.forEach (function (item){
+		citation = "<b>" + item.properties.Title + "</b>. <br>" + item.properties.Author + ". (" +
+		   item.properties.Year + ") " + item.properties.Publicatio + '<br><a href= "'+ 
+		   item.properties.URL +'" target = "_blank" style = "word-wrap: break-word">' + item.properties.URL + "</a>"
+		   document.getElementById("cartlist").innerHTML += "<li id = '" + item._leaflet_id + "'>" + citation + 
+		   "<br><button type='button' onclick = 'removeFromCartC(" + item._leaflet_id + ")'>Remove</button></li>";
+		   cartList.push(item)
+		});
+		console.log(cartList)
+		document.getElementById('cartTotal').innerHTML = document.getElementById('cartlist').children.length + " items"
+	};
+	
+	function openCart(){
+		var cart = document.getElementById("cart");
+		if (cart.style.display == 'none'){
+			cart.style.display = 'block';
+			} else if (cart.style.display == 'block'){
+				console.log('2');
+				cart.style.display = 'none';
+			} else {
+				console.log('not working')
+			}
+		var about = document.getElementById("about");
+		if (about.style.display == 'block'){
+			about.style.display = 'none';
+			} 
+		document.getElementById('cartTotal').innerHTML = document.getElementById('cartlist').children.length + " items"
+	};
+	
+	function openAbout(){
+		var about = document.getElementById("about");
+		if (about.style.display == 'none'){
+			about.style.display = 'block';
+			} else if (about.style.display == 'block'){
+				about.style.display = 'none';
+			} else {
+				console.log('not working')
+			}
+		var cart = document.getElementById("cart");
+		if (cart.style.display == 'block'){
+			cart.style.display = 'none';
+			}
+	};
+	function removeFromCart(x){
+		cButton = document.getElementById("add-" + x)
+		if (cButton.innerHTML == 'Remove From Cart'){
+			var removeList = document.getElementById('cartlist')
+			var listItem = document.getElementById(x)
+			removeList.removeChild(listItem);
+			cButton.innerHTML = 'Add to Cart';
+			cButton.setAttribute("onclick", "addToCart2(" + x + ")");
+		} else {
+			var removeList = document.getElementById('cartlist')
+			var listItem = document.getElementById(x)
+			removeList.removeChild(listItem);
+		}
+		document.getElementById('cartTotal').innerHTML = document.getElementById('cartlist').children.length + " items in cart"
+	};
+	
+	function removeFromCartC(x){
+		var removeList = document.getElementById('cartlist')
+		var listItem = document.getElementById(x)
+		removeList.removeChild(listItem);
+		document.getElementById('cartTotal').innerHTML = document.getElementById('cartlist').children.length + " items in cart"
+	};
+	
+	function clearCart(){
+		document.getElementById("cartlist").innerHTML = ""
+		console.log("Cart Cleared")
+		document.getElementById('cartTotal').innerHTML = document.getElementById('cartlist').children.length + " items in cart"
+	};
+	
+	function exportCart(){
+		var a = document.body.appendChild(
+        document.createElement("a")
+		);
+			a.download = "AspenBibliographyCart.html";
+			a.href = "data:text/html," + document.getElementById("cartlist").innerHTML; 
+			a.click(); 
+	};
+	
+	function exportCart(filename, elId, mimeType) {
+		var elHtml = document.getElementById('cartlist').innerHTML;
+		var link = document.createElement('a');
+		var fileName =  'AspenBibliographyCart.html'; 
+		mimeType = mimeType || 'text/html';
+
+		link.setAttribute('download', fileName);
+		link.setAttribute('href', 'data:' + mimeType  +  ';charset=utf-8,' + encodeURIComponent(elHtml));
+		link.click(); 
+	}
+
+
+	function openPopup(i){
+		geojson._layers[i].openPopup();
+	};
+	/*	function openCart(){
+		var cart = document.getElementById("cart");
+		console.log('it worked')
+		console.log(cart)
+		if (cart.style.visibility == 'none'){
+			console.log('1');
+			cart.style.display = 'block';
+			console.log(cart.visible);
+			} else if (cart.style.display == 'block'){
+				console.log('2');
+				cart.style.display = 'none';
+			} else {
+				console.log('not working')
+			}
+	};*/
+	
+	//make add all to cart button visible if there are any records in the list
+	function addAllBut(){
+		button = document.getElementById("butAddAll");
+		label = document.getElementById("butAddAllLab");
+		if (list.length >= 1){
+			button.style.display = "inline-block";
+			label.style.display = "block";
+		} else {
+			button.style.display = "none";
+			label.style.display = "none";
+		}
+	};
+	
+	function filterYear(){
+		d = new Date();
+		currentYear = d.getFullYear();
+		minYear = document.getElementById('yearmin').value;
+		maxYear = document.getElementById('yearmax').value;
+		if (minYear > maxYear){
+			alert('Please enter "From year" value that is lower than "To year"')
+		} else if (maxYear > currentYear || maxYear < 1910){
+			alert('Current "To Year" is in the future or before any publications were found')
+		} else if (minYear < 1910 ){
+			alert('No publications prior to 1910. Please change to a later year')
+		} else if (minYear > currentYear){
+			alert('"From year" cannot be after the current year. Please change to an earlier year')
+		}
+		//filter
+		geojson.eachLayer(function(layer){
+			a = layer.feature.properties.Year
+			if (a >= minYear && a <= maxYear){
+				layer._path.style.visibility = "visible"
+			} else {
+				layer._path.style.visibility = "hidden"
+			}
+		});
+		
+	}
+
+	/*function countCart(e){
+		console.log(cartList)
+		console.log(cartList + " 1")
+		cartList.push(e)
+		console.log(cartList + " 2")
+		document.getElementById('cartTotal').innerHTML = cartList.length + " items"
+		//delete
+		cartList.remove(x)
+		document.getElementById('cartTotal').innerHTML = cartList.length + " items"
+	};*/
+	
+
+</script>	
+
+</head>
+<body onload="init();">
+
+	<div class="titlebar"><h2 style= "color:white; margin: 0; padding:0px; padding-left: 5px; font-family:Bradley Hand, cursive">Aspen Spatial Bibliography</h2>
+		<input type="image" src="Images/shoppingCart_white.png" onclick = "openCart()" style = "height:30px;position:absolute;top:0;right:0; padding:3px">
+		<input type = "image" src = "Images/info-white.png" onclick = "openAbout()" style = "height:30px;position:absolute;z-index:200;top:0;right:40px;padding:2px"></div>
+	
+	<div id="notification"><p style= "font-size:1.5em; font-style: italic"><b>Generating visible publication list. Please wait...</b></p><p>To improve performance, turn off update visible publication list and zoom in</p></div>
+	<div id="mapid" style ="position: absolute; z-index:1; left:20%; top:35px; right:0; bottom:0;"class = "main">
+		<div id = "yearinput">
+			<label for="yearmin" style = "margin-left:5px"><b>From year:</b></label>
+			<input id = 'yearmin' style = "margin-top:5px; margin-right:10px" size= "4" value = '1910'>
+			<label for="yearmax"><b>To year:</b></label>
+			<input id = 'yearmax' style = "margin-left:5px; margin-top:5px; margin-right:10px" size = "4" value = '2020'>
+			<button onclick="filterYear()" style = "margin:10px">Filter by Year</button>
+		</div>
+	</div>
+	
+
+	<div class = "info">	
+		<h2 align="center" style= "font-family:Bradley Hand, cursive">Using this Map</h3><p style = "padding: 8px; margin-top: 0; margin-left : 5; margin-right : 5; text-align: justify; line-height:1.6">This database is comprised of peer-reviewed journal articles, government documents, book and book sections, 
+		and Master's Theses and Dissertations. Each publication has been assigned coordinates based on the certainty of the study location. The coordinate types are as follows (and can be toggled on/off using the checkboxes): <br></p>
+		<!--<input onchange='filteryear()' type = 'text' id = 'yearmin' size = '4'/> to <input onchange='filteryear()' type = 'text' id = 'yearmax' size = '4'/>
+		<div id = "timeslide"></div>-->
+		<ul class="legend" style = "list-style-type:none; padding-right:10px">
+			<li id="leg-Provided" onclick="filterlyr('Provided')"><input id="chkProvided" type="checkbox" checked/><span class="Provided" style="padding:3px">&nbsp;&bull;</span> <b>Provided</b> - The study area coordinates were explicitly given in the document</span></li>
+			<li id="leg-Estimated" onclick="filterlyr('Estimated')"><input id="chkEstimated" type="checkbox" checked/><span class="Estimated" style="padding:3px">&nbsp;&bull;</span> <b>Estimated:</b> The study area was described, but the coordiates were not given (for example, "Fish Lake National Forest")</span></li>
+			<li id="leg-Generalized" onclick="filterlyr('Generalized')"><input id="chkGeneralized" type="checkbox" checked/><span class="Generalized" style="padding:3px">&nbsp;&bull;</span> <b>Generalized:</b> The study area is very large or only a general description was given (for example, "Central Utah" or "Multiple study sites in Canada")</span></li>
+		</ul>
+		<p style = "margin-top: 0; margin-left : 5; margin-right : 5; text-align: justify; line-height:1.6; padding:8px">To save the reference and URL of papers of interest for later, simply click on the "Add to Cart" button in each point pop-up, or on the publication of interest in the "Visible Publications" section. Then, click on the cart icon in the top right and select "Export to Text" to save an HMTL list of saved references.</p>
+	</div>	
+		
+	<div class = "sresults" style = "word-wrap: break-word; border-top: 1px solid black" id = "sresultsdiv">
+		<h2 align="center" style = "margin-bottom:0; font-family:Bradley Hand, cursive">Visible Publications</h3>
+		<h4 style ="margin-bottom:5px; margin-left:5px; text-align:center">Update Visible Publication List</h4>
+		<div class="onoffswitch" style = "margin: 0 auto">
+			<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="myonoffswitch" onclick = 'renumber()'>
+			<label class="onoffswitch-label" for="myonoffswitch">
+				<span class="onoffswitch-inner"></span>
+				<span class="onoffswitch-switch"></span>
+			</label>
+		</div>
+
+		<br><p id = "totalsresults" style = "text-align:center; font-style:italic; margin-top:0">Pan/zoom to populate</p>
+		<div style = 'text-align:center'><button type='button' id = "butAddAll" onclick = 'addAll()' style = "display:none;">Add All to Cart</button>
+				<h5 id= "butAddAllLab" style = "text-align: center; display:none;margin-top:2px; margin-bottom:3px">(please allow several seconds if many visible records...)</h5></div>
+		<div style = 'text-align:left'><ul id="list" style = "list-style-type:none; padding:0; margin:0; text-align:left"></ul></div>
+	</div>
+	
+	<div class = "cart" id = "cart" style ="display:none">
+		<div style = "text-align:center; margin-top:0; margin-bottom:2px; "><h3 style = "line-height:0%">Publication Cart</h3></div>
+		<div class = "cartButtons" style = "display:flex; justify-content:center; align-items:center; margin-top:2px">
+			<button onclick = "clearCart()" style = "margin-left:5px; margin-top:5px;">Clear Cart</button>
+			<button onclick = "exportCart()" style = "margin-left:5px; margin-top:5px;">Export as HTML</button>
+		</div>
+		<p id="cartTotal" style = "text-align:center; font-style:italic; margin-top:3px"></p>
+		<ul id = "cartlist"></ul>
+	</div>
+	
+	<div class = "about" id = "about" style ="display:none">
+		<h3 align="center">About Us</h3><p style = "margin-top: 0; margin-left : 5; margin-right : 5; text-align: center">This map was created by researchers at Brigham Young University in collaboration with Utah State University using a 
+		bibliography database provided by the Western Aspen Alliance. <br><br> Questions, comments, and suggestions can be directed to <b>spatialbibliography@byu.edu</b>.</p>
+		<div class = "links"><a href="https://www.byu.edu//" target = "_blank"><img src="Images/byu-logo-blue.png" width="32%" style = "background-color:white;border-radius: 5px;"></a>
+			<a href="https://western-aspen-alliance.org/" target = "_blank"><img src="Images/WAA_Logo_Horizonta_RGBl.png" width="32%" style = "background-color:white;border-radius: 5px;"></a>
+			<a href="https://www.usu.edu//" target = "_blank"><img src="Images/utahstate-logo.png" width="32%" style = "background-color:white;border-radius: 5px;"></a></div>
+			
+		<h3 align="center">Thanks to the following who have helped with this project!</h3><h4 align = "center">Developers</h4>
+		<p style = "margin-top: 0; margin-left : 5; margin-right : 5; text-align: center">Ryan Howell<br>Steven Petersen<br>Paul Rodgers<br>Stan Kitchen<br>Mark Jackson<br>Chris Balzotti<br>Anne Hedrich<br>Jesse Howell<br></p>
+		<h4 align = "center">Conributers</h4><p style = "margin-top: 0; margin-left : 5; margin-right : 5; text-align: center">Casey Arnold<br>Ana Kokkonen<br>Jess Newman<br>Hope Carr<br>Jessica Robertson<br>Alia Welsh<br></p>
+	</div>
+	
+</body>
+</html>
