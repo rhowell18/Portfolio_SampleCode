@@ -1,0 +1,89 @@
+###Generate summer RSF figures for thesis and publication
+
+#Prepare data
+##########################################################
+###decay leks
+decay_leks15_s = (seq(-0.6339, 3.7237, by = 0.025))
+GPS1 = as.numeric(rep(0, 175))
+decay_paved15_s = as.numeric(rep(0.5341, 175))
+ndvi_50_s = as.numeric(rep(-2.9953, 175))
+SEX1 = as.numeric(rep(0.2696, 175))
+distleks = (seq(14235.1, 11.74, by = -81.3))
+
+summerleks15_1 = cbind(decay_leks15_s, GPS1, decay_paved15_s, ndvi_50_s, SEX1, distleks)
+
+decay_leks15_s = (seq(-0.6339, 3.7237, by = 0.025))
+GPS1 = as.numeric(rep(1, 175))
+decay_paved15_s = as.numeric(rep(0.5341, 175))
+ndvi_50_s = as.numeric(rep(-2.9953, 175))
+SEX1 = as.numeric(rep(0.2696, 175))
+distleks = (seq(14235.1, 11.74, by = -81.3))
+
+summerleks15_2 = cbind(decay_leks15_s, GPS1, decay_paved15_s, ndvi_50_s, SEX1, distleks)
+
+
+summerleks = as.data.frame(rbind(summerleks15_1, summerleks15_2))
+
+###decay paved
+decay_leks15_s = as.numeric(rep(0.8974, 149))
+GPS1 = as.numeric(rep(0, 149))
+decay_paved15_s = (seq(-0.7666, 2.945, by = 0.025))
+ndvi_50_s = as.numeric(rep(-2.9953, 149))
+SEX1 = as.numeric(rep(0.2696, 149))
+distpaved = (seq(15295, 0, by = -102.652))
+
+summerpaved15_1 = cbind(decay_leks15_s, GPS1, decay_paved15_s, ndvi_50_s, SEX1, distpaved)
+
+decay_leks15_s = as.numeric(rep(0.8974, 149))
+GPS1 = as.numeric(rep(1, 149))
+decay_paved15_s = (seq(-0.7666, 2.945, by = 0.025))
+ndvi_50_s = as.numeric(rep(-2.9953, 149))
+SEX1 = as.numeric(rep(0.2696, 149))
+distpaved = (seq(15295, 0, by = -102.652))
+
+summerpaved15_2 = cbind(decay_leks15_s, GPS1, decay_paved15_s, ndvi_50_s, SEX1, distpaved)
+
+
+summerpaved = as.data.frame(rbind(summerpaved15_1, summerpaved15_2))
+
+###ndvi 50
+decay_leks15_s = as.numeric(rep(0.8974, 155))
+GPS1 = as.numeric(rep(0, 155))
+decay_paved15_s = as.numeric(rep(0.5341, 155))
+ndvi_50_s = (seq(-2.9953, 3.1758, by = 0.04))
+SEX1 = as.numeric(rep(0.2696, 155))
+ndvi = (seq(-0.00746, 0.2216, by = 0.001478))
+
+summerndvi_1 = cbind(decay_leks15_s, GPS1, decay_paved15_s, ndvi_50_s, SEX1, ndvi)
+
+decay_leks15_s = as.numeric(rep(0.8974, 155))
+GPS1 = as.numeric(rep(1, 155))
+decay_paved15_s = as.numeric(rep(0.5341, 155))
+ndvi_50_s = (seq(-2.9953, 3.1758, by = 0.04))
+SEX1 = as.numeric(rep(0.2696, 155))
+ndvi = (seq(-0.00746, 0.2216, by = 0.001478))
+
+summerndvi_2 = cbind(decay_leks15_s, GPS1, decay_paved15_s, ndvi_50_s, SEX1, ndvi)
+
+
+summerndvi = as.data.frame(rbind(summerndvi_1, summerndvi_2))
+
+###Create figures
+###########################################################
+summerleks$predict = exp(-34.6381 + (summerleks$decay_leks15_s *3.3859) + (summerleks$GPS1 * 9.2099) + (summerleks$ndvi_50_s * 0.2383) + (summerleks$decay_paved15 * 2.4449) + (summerleks$SEX1 * -5.9806) + (summerleks$GPS1 * summerleks$decay_leks15_s * 0.6521) + (summerleks$GPS1 * summerleks$ndvi_50_s * -1.0559) + (summerleks$GPS1 * summerleks$decay_paved15_s * 3.7862))/
+  ( 1 + exp(-34.6381 + (summerleks$decay_leks15_s *3.3859) + (summerleks$GPS1 * 9.2099) + (summerleks$ndvi_50_s * 0.2383) + (summerleks$decay_paved15 * 2.4449) + (summerleks$SEX1 * -5.9806) + (summerleks$GPS1 * summerleks$decay_leks15_s * 0.6521) + (summerleks$GPS1 * summerleks$ndvi_50_s * -1.0559) + (summerleks$GPS1 * summerleks$decay_paved15_s * 3.7862)))
+
+summerpaved$predict = exp(-34.6381 + (summerpaved$decay_leks15_s *3.3859) + (summerpaved$GPS1 * 9.2099) + (summerpaved$ndvi_50_s * 0.2383) + (summerpaved$decay_paved15 * 2.4449) + (summerpaved$SEX1 * -5.9806) + (summerpaved$GPS1 * summerpaved$decay_leks15_s * 0.6521) + (summerpaved$GPS1 * summerpaved$ndvi_50_s * -1.0559) + (summerpaved$GPS1 * summerpaved$decay_paved15_s * 3.7862))/
+  ( 1 + exp(-34.6381 + (summerpaved$decay_leks15_s *3.3859) + (summerpaved$GPS1 * 9.2099) + (summerpaved$ndvi_50_s * 0.2383) + (summerpaved$decay_paved15 * 2.4449) + (summerpaved$SEX1 * -5.9806) + (summerpaved$GPS1 * summerpaved$decay_leks15_s * 0.6521) + (summerpaved$GPS1 * summerpaved$ndvi_50_s * -1.0559) + (summerpaved$GPS1 * summerpaved$decay_paved15_s * 3.7862)))
+
+summerndvi$predict = exp(-34.6381 + (summerndvi$decay_leks15_s *3.3859) + (summerndvi$GPS1 * 9.2099) + (summerndvi$ndvi_50_s * 0.2383) + (summerndvi$decay_paved15 * 2.4449) + (summerndvi$SEX1 * -5.9806) + (summerndvi$GPS1 * summerndvi$decay_leks15_s * 0.6521) + (summerndvi$GPS1 * summerndvi$ndvi_50_s * -1.0559) + (summerndvi$GPS1 * summerndvi$decay_paved15_s * 3.7862))/
+  ( 1 + exp(-34.6381 + (summerndvi$decay_leks15_s *3.3859) + (summerndvi$GPS1 * 9.2099) + (summerndvi$ndvi_50_s * 0.2383) + (summerndvi$decay_paved15 * 2.4449) + (summerndvi$SEX1 * -5.9806) + (summerndvi$GPS1 * summerndvi$decay_leks15_s * 0.6521) + (summerndvi$GPS1 * summerndvi$ndvi_50_s * -1.0559) + (summerndvi$GPS1 * summerndvi$decay_paved15_s * 3.7862)))
+
+summerleks$GPS = as.factor(summerleks$GPS1)
+ggplot(summerleks, aes(x = distleks, y = predict, color = GPS)) + geom_smooth(method = loess) + labs(y = 'Relative Probability', x = 'Distance to Leks (m)') + scale_color_manual(labels = c('VHF', "GPS"), values = c('red', 'blue')) + guides(color=guide_legend("")) + theme(axis.line.x = element_line(color="black", size = 0.5), axis.line.y = element_line(color="black", size = 0.5), axis.title.x= element_text(size=12, face = "bold"), axis.title.y= element_text(size=12, face = "bold"), plot.title = element_text(face="bold", hjust = 0.5), panel.background = element_blank())
+
+summerpaved$GPS = as.factor(summerpaved$GPS1)
+ggplot(summerpaved, aes(x = distpaved, y = predict, color = GPS)) + geom_smooth(method = loess) + labs(y = 'Relative Probability', x = 'Distance to Paved Roads (m)') + scale_color_manual(labels = c('VHF', "GPS"), values = c('red', 'blue')) + guides(color=guide_legend("")) + theme(axis.line.x = element_line(color="black", size = 0.5), axis.line.y = element_line(color="black", size = 0.5), axis.title.x= element_text(size=12, face = "bold"), axis.title.y= element_text(size=12, face = "bold"), plot.title = element_text(face="bold", hjust = 0.5), panel.background = element_blank())
+
+summerndvi$GPS = as.factor(summerndvi$GPS1)
+ggplot(summerndvi, aes(x = ndvi, y = predict, color = GPS)) + geom_smooth(method = loess) + labs(y = 'Relative Probability', x = 'NDVI (50)') + scale_color_manual(labels = c('VHF', "GPS"), values = c('red', 'blue')) + guides(color=guide_legend("")) + theme(axis.line.x = element_line(color="black", size = 0.5), axis.line.y = element_line(color="black", size = 0.5), axis.title.x= element_text(size=12, face = "bold"), axis.title.y= element_text(size=12, face = "bold"), plot.title = element_text(face="bold", hjust = 0.5), panel.background = element_blank())
